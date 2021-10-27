@@ -83,4 +83,5 @@ shape = SubResource( 2 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2( 565.98, 359.761 )
+z_index = 1
 shape = SubResource( 3 )

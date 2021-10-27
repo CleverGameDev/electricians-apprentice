@@ -20,6 +20,7 @@ func _set_drag_pc():
 func _input_event(viewport, event, shape_idx):
 	if event is InputEventMouseButton: # TODO: touch as well
 		print(event)		
+		print(self)
 		if event.button_index == BUTTON_LEFT and event.pressed:
 			emit_signal("dragsignal")
 		elif event.button_index == BUTTON_LEFT and !event.pressed:
@@ -27,4 +28,3 @@ func _input_event(viewport, event, shape_idx):
 	elif event is InputEventScreenTouch:
 		if event.pressed and event.get_index() == 0:
 			self.position = event.get_position()
-		
