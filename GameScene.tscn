@@ -1,0 +1,7 @@
+[gd_scene format=2]
+
+[node name="GameScene" type="Node2D"]
+
+[node name="Inventory" type="Node" parent="."]
+
+[node name="Canvas" type="Node" parent="."]
