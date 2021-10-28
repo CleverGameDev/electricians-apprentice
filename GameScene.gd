@@ -19,10 +19,13 @@ var current_object_connections_to_wires = {}
 var current_drawing_wire
 
 func _ready():
+	$Control/HintButton.connect("pressed", self, "hint_button_pressed")
+	$Control/NextLevelButton.connect("pressed", self, "next_level_button_pressed")
 	var buddy_scene = preload("res://Buddy.tscn")
 	buddy = buddy_scene.instance()
 	add_child(buddy)
 	prepare_level_1()
+	# prepare_level_2()
 
 func remove_previous_level():
 	for obj in current_level_wires:
@@ -32,7 +35,18 @@ func remove_previous_level():
 		obj.free()
 	current_level_objects = []
 
+func next_level_button_pressed():
+	remove_previous_level()
+	if current_level == 1:
+		prepare_level_2()
+
+func hint_button_pressed():
+	if current_level == 1:
+		buddy.get_node("Label").text = "Try drawing a wire between the battery and light bulb terminals."
+		# TODO: show circle?
+
 func prepare_level_1():
+	# $Whatever.save_progress(0)
 	current_level = 1
 	buddy.get_node("Label").text = "It's a bit dark, can you turn on the light?"
 	var battery_scene = preload("res://GameObjects/Battery.tscn")
@@ -47,7 +61,36 @@ func prepare_level_1():
 	add_child(bulb)
 	current_level_objects = [battery, bulb]
 
+func prepare_level_2():
+	current_level = 2
+	buddy.get_node("Label").text = "Can you hook up a switch to my light?"
+	var battery_scene = preload("res://GameObjects/Battery.tscn")
+	var battery = battery_scene.instance()
+	battery.position.x = 250
+	battery.position.y = 150
+	add_child(battery)
+	var bulb_scene = preload("res://GameObjects/Bulb.tscn")
+	var bulb = bulb_scene.instance()
+	bulb.position.x = 250
+	bulb.position.y = 250
+	add_child(bulb)
+	var switch_scene = preload("res://GameObjects/Switch.tscn")
+	var switch = switch_scene.instance()
+	switch.position.x = 250
+	switch.position.y = 350
+	add_child(switch)
+	current_level_objects = [battery, bulb, switch]
+
+func finish_level_2():
+	buddy.get_node("Label").text = "Can you switch my light on?"
+	# save here
+	# check if light turn on....
+	pass
+
 func finish_level_1():
+	# save here
+	$Control/HintButton.visible = false
+	$Control/NextLevelButton.visible = true
 	current_level_objects[1].get_node("OffSprite").visible = false
 	current_level_objects[1].get_node("OnSprite").visible = true
 	buddy.get_node("Label").text = "Ah, thats much better!"
@@ -60,6 +103,8 @@ func check_circuit_complete():
 	# current_level_objects[1].get_node("SpriteOn").visible = true
 	if current_level == 1 && len(current_level_wires) == 2:
 		finish_level_1()
+	elif current_level == 2 && len(current_level_wires) == 3: # TODO: make sure switch is turned on
+		finish_level_2()
 	return false
 
 func _process(delta):
