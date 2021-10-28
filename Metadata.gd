@@ -8,7 +8,6 @@ func _ready():
 	currentUserId = userId
 	print("currentUserId: %s" % currentUserId)
 	
-	saveScoresToCookies(currentUserId)
 	scores = getScoresFromCookies(currentUserId)
 	print("scores: %s" % scores)
 	
