@@ -1,13 +1,15 @@
 extends Node2D
 
-# TODO: create a GetClever app for this and fill out this constant
-var appId = ""
 var currentUserId = ""
-var scores = null
+var scores = {}
 
 func _ready():
 	var userId = getUserId()
 	currentUserId = userId
+	print("currentUserId: %s" % currentUserId)
+	
+	scores = getScoresFromCookies(currentUserId)
+	print("scores: %s" % scores)
 	
 func getUserId():
 	var userId = ""
@@ -18,49 +20,27 @@ func getUserId():
 				userId = key_value[1]
 	return userId
 
+func saveScoresToCookies(userId):
+	var save_game = File.new()
+	save_game.open("user://%s" % userId, File.WRITE)
+	save_game.store_line(to_json(scores))
+	save_game.close()
+
+func getScoresFromCookies(userId):
+	var save_game = File.new()
+	if not save_game.file_exists("user://%s" % userId):
+		return
+	
+	save_game.open("user://%s" % userId, File.READ)
+	var result = parse_json(save_game.get_line())
+	save_game.close()
+	
+	return result
+
 func saveScore(level, score):
-	if currentUserId == "":
-		push_error("unable to save score: no user")
-		return
-
-	var request = HTTPRequest.new()
-	request.connect("request_completed", self, "_saveScoreComplete")
+	scores[level] = score
+	print("saved score %s to level %s" % [score, level])
 	
-	var url = "https://app.getclever.com/api/userAppMetadatas/{userId}/recordScore/{appId}" % [currentUserId, appId]
-	var body = {"level": level, "score": score}
-	var error = request.request(url, [], true, HTTPClient.METHOD_POST, body)
-	if error != OK:
-		push_error("unable to save score: http request error")
-		
-func _saveScoreComplete(result, response_code, headers, body):
-	print_debug("finished saving score")
-
-func getScores(level):
-	if currentUserId == "":
-		push_error("unable to save score: no user")
-		return
-
-	var request = HTTPRequest.new()
-	request.connect("request_completed", self, "_getScoresComplete")
-	
-	var url = "https://app.getclever.com/api/userAppMetadatas"
-	# TODO: get session here
-	var error = request.request(url)
-	if error != OK:
-		push_error("unable to get scores: http request error")
-
-func _getScoresComplete(result, response_code, headers, body):
-	if result != 0:
-		push_error("unable to get scores: http response error")
-		return
-		
-	if response_code != 200:
-		push_error("unable to get scores: %d error code " % response_code)
-		return
-		
-	var parsedBody = parse_json(body.get_string_from_utf8())
-	for metadata in parsedBody:
-		if metadata["appID"] == appId:
-			scores = metadata["scores"]
-	
-	return
+func getScore(level):
+	print("got score %s for level %s" % [scores[level], level])
+	return scores[level]
