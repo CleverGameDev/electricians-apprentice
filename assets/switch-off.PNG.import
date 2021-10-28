@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/resistor.png-13a69fc2cc85a8c0e8c9ebb0dd7fa96c.stex"
+path="res://.import/switch-off.PNG-931b346b1e103fc49b9da65969e3c73b.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://resistor.png"
-dest_files=[ "res://.import/resistor.png-13a69fc2cc85a8c0e8c9ebb0dd7fa96c.stex" ]
+source_file="res://assets/switch-off.PNG"
+dest_files=[ "res://.import/switch-off.PNG-931b346b1e103fc49b9da65969e3c73b.stex" ]
 
 [params]
 

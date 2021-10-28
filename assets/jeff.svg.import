@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/magnet.PNG-8daedf42e34845a1514488f7c66ef081.stex"
+path="res://.import/jeff.svg-7cefa99f0a5be148bb1c9fabcb5bccdc.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://magnet.PNG"
-dest_files=[ "res://.import/magnet.PNG-8daedf42e34845a1514488f7c66ef081.stex" ]
+source_file="res://assets/jeff.svg"
+dest_files=[ "res://.import/jeff.svg-7cefa99f0a5be148bb1c9fabcb5bccdc.stex" ]
 
 [params]
 

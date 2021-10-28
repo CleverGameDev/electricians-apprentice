@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/switch-off.PNG-fb95af6bb077bab705155ed0622b2244.stex"
+path="res://.import/bulb-on.PNG-be40231dae8d140da6e6127bfeada389.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://switch-off.PNG"
-dest_files=[ "res://.import/switch-off.PNG-fb95af6bb077bab705155ed0622b2244.stex" ]
+source_file="res://assets/bulb-on.PNG"
+dest_files=[ "res://.import/bulb-on.PNG-be40231dae8d140da6e6127bfeada389.stex" ]
 
 [params]
 

@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/switch-on.PNG-ca2e3524a85c295a358f36fc060b49a6.stex"
+path="res://.import/magnet.PNG-117ee3142d22c2df65555b4c8c43f60e.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://switch-on.PNG"
-dest_files=[ "res://.import/switch-on.PNG-ca2e3524a85c295a358f36fc060b49a6.stex" ]
+source_file="res://assets/magnet.PNG"
+dest_files=[ "res://.import/magnet.PNG-117ee3142d22c2df65555b4c8c43f60e.stex" ]
 
 [params]
 
