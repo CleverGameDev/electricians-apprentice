@@ -28,7 +28,7 @@ margin_right = 898.0
 margin_bottom = 20.0
 text = "New Game"
 
-[node name="\?" type="Button" parent="Control/VBoxContainer"]
+[node name="Blank" type="Button" parent="Control/VBoxContainer"]
 margin_top = 24.0
 margin_right = 898.0
 margin_bottom = 44.0
