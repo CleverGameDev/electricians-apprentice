@@ -21,11 +21,12 @@ var current_drawing_wire
 func _ready():
 	$Control/HintButton.connect("pressed", self, "hint_button_pressed")
 	$Control/NextLevelButton.connect("pressed", self, "next_level_button_pressed")
+	$Control/ResetButton.connect("pressed", self, "reset_button_pressed")
 	var buddy_scene = preload("res://Buddy.tscn")
 	buddy = buddy_scene.instance()
 	add_child(buddy)
-	prepare_level_1()
-	# prepare_level_2()
+	# prepare_level_1()
+	prepare_level_2()
 
 func remove_previous_level():
 	for obj in current_level_wires:
@@ -34,6 +35,13 @@ func remove_previous_level():
 	for obj in current_level_objects:
 		obj.free()
 	current_level_objects = []
+
+func reset_button_pressed():
+	remove_previous_level()
+	if current_level == 1:
+		prepare_level_1()
+	elif current_level == 2:
+		prepare_level_2()
 
 func next_level_button_pressed():
 	remove_previous_level()
@@ -82,10 +90,18 @@ func prepare_level_2():
 	current_level_objects = [battery, bulb, switch]
 
 func finish_level_2():
-	buddy.get_node("Label").text = "Can you switch my light on?"
-	# save here
-	# check if light turn on....
-	pass
+	if current_level_objects[2].get_node("OnSprite").visible:
+		$Control/HintButton.visible = false
+		$Control/NextLevelButton.visible = true
+		current_level_objects[1].get_node("OffSprite").visible = false
+		current_level_objects[1].get_node("OnSprite").visible = true
+		buddy.get_node("Label").text = "Aha!"
+	else:
+		$Control/HintButton.visible = true
+		$Control/NextLevelButton.visible = false
+		current_level_objects[1].get_node("OffSprite").visible = true
+		current_level_objects[1].get_node("OnSprite").visible = false
+		buddy.get_node("Label").text = "Can you switch my light on?"
 
 func finish_level_1():
 	# save here
@@ -95,15 +111,10 @@ func finish_level_1():
 	current_level_objects[1].get_node("OnSprite").visible = true
 	buddy.get_node("Label").text = "Ah, thats much better!"
 
-# TODO: loop through wires and make sure they are connected
-# for now, assume level 1, current_level_objects are [battery, bulb]
 func check_circuit_complete():
-	# if circuit is indeed complete, set bulb to "on"
-	# current_level_objects[1].get_node("SpriteOff").visible = false
-	# current_level_objects[1].get_node("SpriteOn").visible = true
 	if current_level == 1 && len(current_level_wires) == 2:
 		finish_level_1()
-	elif current_level == 2 && len(current_level_wires) == 3: # TODO: make sure switch is turned on
+	elif current_level == 2 && len(current_level_wires) == 3:
 		finish_level_2()
 	return false
 
@@ -193,6 +204,25 @@ func delete_current_drawing_wire():
 	current_drawing_wire.free()
 	current_drawing_wire = null
 
+func toggle_switch(obj):
+	obj.get_node("OffSprite").visible = !obj.get_node("OffSprite").visible
+	obj.get_node("OnSprite").visible = !obj.get_node("OnSprite").visible
+	check_circuit_complete()
+
+# do an interaction with an object (toggle switch)
+func get_interaction_object_overlap(pos):
+	for obj in current_level_objects:
+		if "object_type" in obj && obj.object_type == "switch":
+			var collision = obj.get_node("ActualSwitch").get_node("CollisionShape2D")
+			var min_x = collision.global_position.x - collision.shape.extents.x
+			var max_x = collision.global_position.x + collision.shape.extents.x
+			var min_y = collision.global_position.y - collision.shape.extents.y
+			var max_y = collision.global_position.y + collision.shape.extents.y
+			if pos.x > min_x && pos.y > min_y && pos.x < max_x && pos.y < max_y:
+				toggle_switch(obj)
+				return obj
+	return null
+
 # gets the object the position overlaps
 func get_position_object_overlap(pos):
 	# probably will need to do z_index...
@@ -223,6 +253,10 @@ func _input(event):
 	if event is InputEventMouseButton:
 		# check if mouse is within bounds
 		if event.button_index == BUTTON_LEFT and event.pressed:
+			# first check if we interact with anything (switch)
+			var interaction_object = get_interaction_object_overlap(event.position)
+			if interaction_object:
+				return
 			# check if we are clicked an object
 			var overlapping_object = get_position_object_overlap(event.position)
 			if current_drawing_wire:

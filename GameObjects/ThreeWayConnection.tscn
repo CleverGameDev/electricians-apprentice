@@ -1,0 +1,42 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://assets/three_way_conn.png" type="Texture" id=1]
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 7.37548, 7.15564 )
+
+[sub_resource type="RectangleShape2D" id=2]
+extents = Vector2( 5.79731, 6.17549 )
+
+[node name="ThreeWayConnection" type="RigidBody2D"]
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( -7.9267, -1.28411 )
+scale = Vector2( 0.5, 0.5 )
+texture = ExtResource( 1 )
+region_rect = Rect2( 40.96, 443.89, 234, 89 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2( -0.552641, -0.775128 )
+shape = SubResource( 1 )
+
+[node name="TerminalA" type="StaticBody2D" parent="."]
+position = Vector2( -14.2112, -0.771648 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TerminalA"]
+position = Vector2( -0.0143051, -0.014082 )
+shape = SubResource( 2 )
+
+[node name="TerminalB" type="StaticBody2D" parent="."]
+position = Vector2( 13.4576, -0.984287 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TerminalB"]
+position = Vector2( -0.181152, 0.213409 )
+shape = SubResource( 2 )
+
+[node name="TerminalC" type="StaticBody2D" parent="."]
+position = Vector2( -0.863503, -14.877 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="TerminalC"]
+position = Vector2( -0.181152, 0.213409 )
+shape = SubResource( 2 )
