@@ -1,30 +1,167 @@
-extends Area2D
+extends Node2D
 
 var dragging = false
 
-var inCanvas = false
+var dragging_object
 
-signal dragsignal;
+var current_level_objects = []
+var current_level_wires = []
+
+# wire => [object1, object2]
+var current_wire_connections_to_objects = {}
+# object => { "TerminalA": wire, "TerminalB": wire2 }
+var current_object_connections_to_wires = {}
+
+var current_drawing_wire
 
 func _ready():
-	connect("dragsignal",self,"_set_drag_pc")
+	prepare_level_1()
+
+func remove_previous_level():
+	for obj in current_level_wires:
+		obj.free()
+	current_level_wires = []
+	for obj in current_level_objects:
+		obj.free()
+	current_level_objects = []
+
+func prepare_level_1():
+	var battery_scene = preload("res://GameObjects/Battery.tscn")
+	var battery = battery_scene.instance()
+	battery.position.x = 250
+	battery.position.y = 150
+	add_child(battery)
+	var bulb_scene = preload("res://GameObjects/Bulb.tscn")
+	var bulb = bulb_scene.instance()
+	bulb.position.x = 250
+	bulb.position.y = 250
+	add_child(bulb)
+	current_level_objects = [battery, bulb]
+
+# TODO: loop through wires and make sure they are connected
+# for now, assume level 1, current_level_objects are [battery, bulb]
+func check_circuit_complete():
+	# if circuit is indeed complete, set bulb to "on"
+	# current_level_objects[1].get_node("SpriteOff").visible = false
+	# current_level_objects[1].get_node("SpriteOn").visible = true
+	return false
 
 func _process(delta):
-	if dragging:
+	if dragging_object:
 		var mousepos = get_viewport().get_mouse_position()
-		self.position = Vector2(mousepos.x, mousepos.y)
+		dragging_object.position = Vector2(mousepos.x, mousepos.y)
+		if dragging_object in current_object_connections_to_wires:
+			var object_to_wire_conn_data = current_object_connections_to_wires[dragging_object]
+			for terminal in ["TerminalA", "TerminalB"]:
+				if terminal in object_to_wire_conn_data:
+					var wire = object_to_wire_conn_data[terminal]
+					# set the point relative to terminal
+					var offset = dragging_object.get_node(terminal).position
+					# which point to move
+					var index = 1
+					if dragging_object == current_wire_connections_to_objects[wire][0]:
+						index = 0
+						# special case, just if an object is somehow connected to itself
+						# TODO: how to redraw??
+					wire.set_point_position(index, Vector2(mousepos.x + offset.x, mousepos.y + offset.y))
+	
+			# figure out which wires to move, and which points on those wires
+# wire => [object1, object2]
+#var current_wire_connections_to_objects = {}
+# object => { "TerminalA": wire, "TerminalB": wire2 }
+#var current_object_connections_to_wires = {}
+						
+	elif current_drawing_wire:
+		var mousepos = get_viewport().get_mouse_position()
+		current_drawing_wire.set_point_position(1, mousepos)
 
-func _set_drag_pc():
-	dragging=!dragging
+# starts or completes a terminal drawing
+# receives something like
+# {"object": battery_object, "terminal_name": "TerminalA", "position": Vector2(100,100)}
+func terminal_wire_event(terminal_data):
+	if !terminal_data:
+		return
+	# TODO: error checking if terminal is already taken, or if we are trying to connect something to itself
+	# if we are drawing a wire now, a terminal event means add the wire
+	if current_drawing_wire:
+		var wire_to_obj_conn_data = current_wire_connections_to_objects[current_drawing_wire]
+		wire_to_obj_conn_data.append(terminal_data["object"])
+		current_wire_connections_to_objects[current_drawing_wire] = wire_to_obj_conn_data
 
-func _input_event(viewport, event, shape_idx):
-	if event is InputEventMouseButton: # TODO: touch as well
-		print(event)		
-		print(self)
+		var obj_to_wire_conn_data = {}
+		if terminal_data["object"] in current_object_connections_to_wires:
+			obj_to_wire_conn_data = current_object_connections_to_wires[terminal_data["object"]]
+		obj_to_wire_conn_data[terminal_data["terminal_name"]] = current_drawing_wire
+		current_object_connections_to_wires[terminal_data["object"]] = obj_to_wire_conn_data
+		
+		
+		current_drawing_wire.connections.append(terminal_data["object"])
+		current_level_wires.append(current_drawing_wire)
+		current_drawing_wire = null
+	# otherwise, we are starting a new wire
+	else:
+		var wire_scene = preload("res://GameObjects/Wire.tscn")
+		var wire = wire_scene.instance()
+		wire.connections.append(terminal_data["object"])
+		wire.add_point(Vector2(terminal_data["position"].x, terminal_data["position"].y))
+		wire.add_point(Vector2(terminal_data["position"].x+100, terminal_data["position"].y+100))
+		add_child(wire)
+		current_drawing_wire = wire
+
+		current_wire_connections_to_objects[current_drawing_wire] = [terminal_data["object"]]
+
+		var obj_to_wire_conn_data = {}
+		if terminal_data["object"] in current_object_connections_to_wires:
+			obj_to_wire_conn_data = current_object_connections_to_wires[terminal_data["object"]]
+		obj_to_wire_conn_data[terminal_data["terminal_name"]] = current_drawing_wire
+		current_object_connections_to_wires[terminal_data["object"]] = obj_to_wire_conn_data
+	
+
+# gets the object the position overlaps
+func get_position_object_overlap(pos):
+	# probably will need to do z_index...
+	for obj in current_level_objects:
+		var collision = obj.get_node("CollisionShape2D")
+		var min_x = collision.global_position.x - collision.shape.extents.x
+		var max_x = collision.global_position.x + collision.shape.extents.x
+		var min_y = collision.global_position.y - collision.shape.extents.y
+		var max_y = collision.global_position.y + collision.shape.extents.y
+		if pos.x > min_x && pos.y > min_y && pos.x < max_x && pos.y < max_y:
+			return obj
+	return null
+
+# find which terminal we clicked
+func get_terminals_overlap(pos):
+	for obj in current_level_objects:
+		for terminal in ["TerminalA", "TerminalB"]:
+			var collision = obj.get_node(terminal).get_node("CollisionShape2D")
+			var min_x = collision.global_position.x - collision.shape.extents.x
+			var max_x = collision.global_position.x + collision.shape.extents.x
+			var min_y = collision.global_position.y - collision.shape.extents.y
+			var max_y = collision.global_position.y + collision.shape.extents.y
+			if pos.x > min_x && pos.y > min_y && pos.x < max_x && pos.y < max_y:
+				return {"object": obj, "terminal_name": terminal, "position": pos}
+	return null
+
+func _input(event):
+	if event is InputEventMouseButton:
+		# check if mouse is within bounds
 		if event.button_index == BUTTON_LEFT and event.pressed:
-			emit_signal("dragsignal")
+			# check if we are clicked an object
+			var overlapping_object = get_position_object_overlap(event.position)
+			if current_drawing_wire:
+				# TODO: finish drawing a wire if we click an object
+				pass
+			else:
+				dragging_object = overlapping_object
+			# if not, check if we are clicking a terminal
+			var terminal_data = get_terminals_overlap(event.position)
+			terminal_wire_event(terminal_data)
 		elif event.button_index == BUTTON_LEFT and !event.pressed:
-			emit_signal("dragsignal")
-	elif event is InputEventScreenTouch:
-		if event.pressed and event.get_index() == 0:
-			self.position = event.get_position()
+			dragging_object = null
+	#TODO: touch events...
+	#elif event is InputEventScreenTouch:
+		#if event.pressed and event.get_index() == 0:
+			#self.position = event.position
+		
+

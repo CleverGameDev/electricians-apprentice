@@ -1,0 +1,40 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://assets/dreamstime_xxl_134360947.jpg" type="Texture" id=1]
+
+[sub_resource type="GDScript" id=2]
+script/source = "extends StaticBody2D
+
+var object_type = \"led\"
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = \"text\"
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+"
+
+[sub_resource type="RectangleShape2D" id=1]
+extents = Vector2( 50.7788, 56.1575 )
+
+[node name="LED" type="StaticBody2D"]
+script = SubResource( 2 )
+
+[node name="Sprite" type="Sprite" parent="."]
+position = Vector2( 0.252808, 2.69983 )
+scale = Vector2( 0.15, 0.15 )
+texture = ExtResource( 1 )
+region_enabled = true
+region_rect = Rect2( 323.633, 1447.21, 695.066, 770.964 )
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2( 0, 1.8313 )
+shape = SubResource( 1 )
