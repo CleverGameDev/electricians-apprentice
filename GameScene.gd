@@ -4,8 +4,12 @@ var dragging = false
 
 var dragging_object
 
+var buddy
+
 var current_level_objects = []
 var current_level_wires = []
+
+var current_level
 
 # wire => [object1, object2]
 var current_wire_connections_to_objects = {}
@@ -15,6 +19,9 @@ var current_object_connections_to_wires = {}
 var current_drawing_wire
 
 func _ready():
+	var buddy_scene = preload("res://Buddy.tscn")
+	buddy = buddy_scene.instance()
+	add_child(buddy)
 	prepare_level_1()
 
 func remove_previous_level():
@@ -26,6 +33,8 @@ func remove_previous_level():
 	current_level_objects = []
 
 func prepare_level_1():
+	current_level = 1
+	buddy.get_node("Label").text = "It's a bit dark, can you turn on the light?"
 	var battery_scene = preload("res://GameObjects/Battery.tscn")
 	var battery = battery_scene.instance()
 	battery.position.x = 250
@@ -38,12 +47,19 @@ func prepare_level_1():
 	add_child(bulb)
 	current_level_objects = [battery, bulb]
 
+func finish_level_1():
+	current_level_objects[1].get_node("OffSprite").visible = false
+	current_level_objects[1].get_node("OnSprite").visible = true
+	buddy.get_node("Label").text = "Ah, thats much better!"
+
 # TODO: loop through wires and make sure they are connected
 # for now, assume level 1, current_level_objects are [battery, bulb]
 func check_circuit_complete():
 	# if circuit is indeed complete, set bulb to "on"
 	# current_level_objects[1].get_node("SpriteOff").visible = false
 	# current_level_objects[1].get_node("SpriteOn").visible = true
+	if current_level == 1 && len(current_level_wires) == 2:
+		finish_level_1()
 	return false
 
 func _process(delta):
@@ -61,16 +77,7 @@ func _process(delta):
 					var index = 1
 					if dragging_object == current_wire_connections_to_objects[wire][0]:
 						index = 0
-						# special case, just if an object is somehow connected to itself
-						# TODO: how to redraw??
 					wire.set_point_position(index, Vector2(mousepos.x + offset.x, mousepos.y + offset.y))
-	
-			# figure out which wires to move, and which points on those wires
-# wire => [object1, object2]
-#var current_wire_connections_to_objects = {}
-# object => { "TerminalA": wire, "TerminalB": wire2 }
-#var current_object_connections_to_wires = {}
-						
 	elif current_drawing_wire:
 		var mousepos = get_viewport().get_mouse_position()
 		current_drawing_wire.set_point_position(1, mousepos)
@@ -79,12 +86,27 @@ func _process(delta):
 # receives something like
 # {"object": battery_object, "terminal_name": "TerminalA", "position": Vector2(100,100)}
 func terminal_wire_event(terminal_data):
+	# TODO: if we click a terminal already hooked up, unhook it
+	# TODO: multiple wires from one terminal??
+	
 	if !terminal_data:
 		return
-	# TODO: error checking if terminal is already taken, or if we are trying to connect something to itself
+
+	# check if terminal is already taken
+	# TODO: maybe allow multiple wires from one terminal? (parallel circuits?)
+	if terminal_data["object"] in current_object_connections_to_wires:
+		var obj_to_wire_conn_data = current_object_connections_to_wires[terminal_data["object"]]
+		if terminal_data["terminal_name"] in obj_to_wire_conn_data:
+			return
+	
+
+	# TODO: error checking if terminal is already taken
 	# if we are drawing a wire now, a terminal event means add the wire
 	if current_drawing_wire:
 		var wire_to_obj_conn_data = current_wire_connections_to_objects[current_drawing_wire]
+		# return out if we try to connect an object to itself:
+		if wire_to_obj_conn_data[0] == terminal_data["object"]:
+			return
 		wire_to_obj_conn_data.append(terminal_data["object"])
 		current_wire_connections_to_objects[current_drawing_wire] = wire_to_obj_conn_data
 
@@ -115,7 +137,18 @@ func terminal_wire_event(terminal_data):
 			obj_to_wire_conn_data = current_object_connections_to_wires[terminal_data["object"]]
 		obj_to_wire_conn_data[terminal_data["terminal_name"]] = current_drawing_wire
 		current_object_connections_to_wires[terminal_data["object"]] = obj_to_wire_conn_data
-	
+	check_circuit_complete()
+
+func delete_current_drawing_wire():
+	var connected_obj = current_wire_connections_to_objects[current_drawing_wire][0]
+	current_wire_connections_to_objects[current_drawing_wire] = null
+	var obj_to_wire_conn_data = {}
+	obj_to_wire_conn_data = current_object_connections_to_wires[connected_obj]
+	for terminal in ["TerminalA", "TerminalB"]:
+		if terminal in obj_to_wire_conn_data && obj_to_wire_conn_data[terminal] == current_drawing_wire:
+			obj_to_wire_conn_data[terminal] = null
+	current_drawing_wire.free()
+	current_drawing_wire = null
 
 # gets the object the position overlaps
 func get_position_object_overlap(pos):
@@ -156,6 +189,9 @@ func _input(event):
 				dragging_object = overlapping_object
 			# if not, check if we are clicking a terminal
 			var terminal_data = get_terminals_overlap(event.position)
+			# if we click into space while drawing, cancel drawing
+			if current_drawing_wire && !terminal_data:
+				delete_current_drawing_wire()
 			terminal_wire_event(terminal_data)
 		elif event.button_index == BUTTON_LEFT and !event.pressed:
 			dragging_object = null

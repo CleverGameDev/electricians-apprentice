@@ -9,7 +9,8 @@ extents = Vector2( 36.2489, 48.3924 )
 [sub_resource type="RectangleShape2D" id=2]
 extents = Vector2( 3.89821, 3.02902 )
 
-[node name="Battery" type="StaticBody2D"]
+[node name="Battery" type="RigidBody2D"]
+mode = 3
 script = ExtResource( 2 )
 
 [node name="Sprite" type="Sprite" parent="."]

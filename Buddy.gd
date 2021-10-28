@@ -1,6 +1,5 @@
-extends RigidBody2D
+extends Node2D
 
-var object_type = "battery"
 
 # Declare member variables here. Examples:
 # var a = 2
@@ -9,6 +8,7 @@ var object_type = "battery"
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	
 	pass # Replace with function body.
 
 

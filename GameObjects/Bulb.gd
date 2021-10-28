@@ -1,4 +1,4 @@
-extends StaticBody2D
+extends RigidBody2D
 
 var object_type = "Bulb"
 # Declare member variables here. Examples:

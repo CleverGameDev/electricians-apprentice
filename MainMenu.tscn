@@ -40,8 +40,8 @@ margin_right = 898.0
 margin_bottom = 68.0
 text = "About"
 
-[node name="Button" type="Button" parent="Control/VBoxContainer"]
+[node name="Exit" type="Button" parent="Control/VBoxContainer"]
 margin_top = 72.0
 margin_right = 898.0
 margin_bottom = 92.0
-text = "Whatever"
+text = "Exit"
