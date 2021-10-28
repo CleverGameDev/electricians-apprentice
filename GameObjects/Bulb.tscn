@@ -24,7 +24,7 @@ shape = SubResource( 1 )
 
 [node name="OnSprite" type="Sprite" parent="."]
 visible = false
-position = Vector2( 0, 23.9715 )
+position = Vector2( -1.49994, -1.02475 )
 scale = Vector2( 0.5, 0.5 )
 texture = ExtResource( 2 )
 

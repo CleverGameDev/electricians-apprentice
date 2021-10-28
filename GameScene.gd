@@ -69,7 +69,7 @@ func _process(delta):
 		if dragging_object in current_object_connections_to_wires:
 			var object_to_wire_conn_data = current_object_connections_to_wires[dragging_object]
 			for terminal in ["TerminalA", "TerminalB"]:
-				if terminal in object_to_wire_conn_data:
+				if terminal in object_to_wire_conn_data && object_to_wire_conn_data[terminal]:
 					var wire = object_to_wire_conn_data[terminal]
 					# set the point relative to terminal
 					var offset = dragging_object.get_node(terminal).position
@@ -88,7 +88,6 @@ func _process(delta):
 func terminal_wire_event(terminal_data):
 	# TODO: if we click a terminal already hooked up, unhook it
 	# TODO: multiple wires from one terminal??
-	
 	if !terminal_data:
 		return
 
@@ -99,7 +98,6 @@ func terminal_wire_event(terminal_data):
 		if terminal_data["terminal_name"] in obj_to_wire_conn_data:
 			return
 	
-
 	# TODO: error checking if terminal is already taken
 	# if we are drawing a wire now, a terminal event means add the wire
 	if current_drawing_wire:
@@ -146,7 +144,7 @@ func delete_current_drawing_wire():
 	obj_to_wire_conn_data = current_object_connections_to_wires[connected_obj]
 	for terminal in ["TerminalA", "TerminalB"]:
 		if terminal in obj_to_wire_conn_data && obj_to_wire_conn_data[terminal] == current_drawing_wire:
-			obj_to_wire_conn_data[terminal] = null
+			obj_to_wire_conn_data.erase(terminal)
 	current_drawing_wire.free()
 	current_drawing_wire = null
 
