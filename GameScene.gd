@@ -1,4 +1,4 @@
-extends Node2D
+extends "res://Metadata.gd"
 
 var dragging = false
 
@@ -25,8 +25,9 @@ func _ready():
 	var buddy_scene = preload("res://Buddy.tscn")
 	buddy = buddy_scene.instance()
 	add_child(buddy)
-	prepare_level_1()
 
+	current_level = getLevel()
+	show_current_level()
 
 func remove_previous_level():
 	$Explosion.visible = false
@@ -42,6 +43,14 @@ func remove_previous_level():
 
 func reset_button_pressed():
 	remove_previous_level()
+	show_current_level()
+
+# only god can judge me
+func next_level_button_pressed():
+	remove_previous_level()
+	show_next_level()
+
+func show_current_level():
 	if current_level == 1:
 		prepare_level_1()
 	elif current_level == 2:
@@ -55,9 +64,7 @@ func reset_button_pressed():
 	elif current_level == 6:
 		prepare_level_6()
 
-# only god can judge me
-func next_level_button_pressed():
-	remove_previous_level()
+func show_next_level():
 	if current_level == 1:
 		prepare_level_2()
 	elif current_level == 2:
@@ -84,7 +91,6 @@ func hint_button_pressed():
 		buddy.get_node("Label").text = "ALPHA: The component with 3 dots can connect multiple wires. Make sure the switches are in separate parallel circuits."
 
 func prepare_level_1():
-	# $Whatever.save_progress(0)
 	current_level = 1
 	buddy.get_node("Label").text = "It's a bit dark, can you turn on the light?"
 	var battery_scene = preload("res://GameObjects/Battery.tscn")
@@ -228,6 +234,8 @@ func prepare_level_6():
 
 
 func finish_level_5():
+	saveLevel(6)
+	saveDataToCookies()
 	$Control/HintButton.visible = false
 	$Control/NextLevelButton.visible = true
 	current_level_objects[1].get_node("OffSprite").visible = false
@@ -237,6 +245,8 @@ func finish_level_5():
 	buddy.get_node("Label").text = "Very good. This circuit is unparalled!"
 
 func finish_level_3():
+	saveLevel(4)
+	saveDataToCookies()
 	$Control/HintButton.visible = false
 	$Control/NextLevelButton.visible = true
 	current_level_objects[1].get_node("OffSprite").visible = false
@@ -247,6 +257,8 @@ func finish_level_3():
 
 func finish_level_2():
 	if current_level_objects[2].get_node("OnSprite").visible:
+		saveLevel(3)
+		saveDataToCookies()
 		$Control/HintButton.visible = false
 		$Control/NextLevelButton.visible = true
 		current_level_objects[1].get_node("OffSprite").visible = false
@@ -414,7 +426,8 @@ func bulb_is_on(bulb):
 		return false
 
 func finish_level_1():
-	# save here
+	saveLevel(2)
+	saveDataToCookies()
 	$Control/HintButton.visible = false
 	$Control/NextLevelButton.visible = true
 	current_level_objects[1].get_node("OffSprite").visible = false
@@ -429,6 +442,8 @@ func do_level_4_too_bright():
 	buddy.get_node("Label").text = "The light is too bright! Undo in the upper right."
 
 func finish_level_4():
+	saveLevel(5)
+	saveDataToCookies()
 	$Control/HintButton.visible = false
 	$Control/NextLevelButton.visible = true
 	current_level_objects[1].get_node("OffSprite").visible = false
@@ -457,7 +472,7 @@ func check_circuit_complete():
 	elif current_level == 4:
 		check_bulbs_loop()
 		if len(current_level_wires) == 3:
-			finish_level_4()
+			finish_level_5()
 		elif current_level_objects[1].get_node("OnSprite").visible:
 			do_level_4_too_bright()
 	elif current_level == 5:
