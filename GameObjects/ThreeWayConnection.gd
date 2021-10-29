@@ -1,6 +1,7 @@
 extends RigidBody2D
 
-var object_type = "bulb"
+
+var object_type = "three_way_connection"
 # Declare member variables here. Examples:
 # var a = 2
 # var b = "text"
