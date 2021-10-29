@@ -26,9 +26,12 @@ func _ready():
 	buddy = buddy_scene.instance()
 	add_child(buddy)
 	#prepare_level_1()
-	prepare_level_4()
+	prepare_level_2()
+
 
 func remove_previous_level():
+	$Explosion.visible = false
+	buddy.get_node("Crying").visible = false
 	$Control/HintButton.visible = true
 	$Control/NextLevelButton.visible = false
 	for obj in current_level_wires:
@@ -50,6 +53,8 @@ func reset_button_pressed():
 		prepare_level_4()
 	elif current_level == 5:
 		prepare_level_5()
+	elif current_level == 6:
+		prepare_level_6()
 
 # only god can judge me
 func next_level_button_pressed():
@@ -62,6 +67,8 @@ func next_level_button_pressed():
 		prepare_level_4()
 	elif current_level == 4:
 		prepare_level_5()
+	elif current_level == 5:
+		prepare_level_6()
 
 func hint_button_pressed():
 	if current_level == 1:
@@ -71,9 +78,11 @@ func hint_button_pressed():
 	elif current_level == 3:
 		buddy.get_node("Label").text = "Try connecting everything up. Reset in the upper left if you make a mistake."
 	elif current_level == 4:
-		buddy.get_node("Label").text = "The component with 3 dots can connect multiple wires."
+		buddy.get_node("Label").text = "Try using the resistor! It reduces electricity flow."
 	elif current_level == 5:
-		buddy.get_node("Label").text = "The component with 3 dots can connect multiple wires. Make sure the switches are in separate parallel circuits."
+		buddy.get_node("Label").text = "BETA: The component with 3 dots can connect multiple wires."
+	elif current_level == 6:
+		buddy.get_node("Label").text = "BETA: The component with 3 dots can connect multiple wires. Make sure the switches are in separate parallel circuits."
 
 func prepare_level_1():
 	# $Whatever.save_progress(0)
@@ -132,7 +141,28 @@ func prepare_level_3():
 
 func prepare_level_4():
 	current_level = 4
-	buddy.get_node("Label").text = "Let's power two bulbs in a parallel circuit!"
+	buddy.get_node("Label").text = "This battery is really powerful! Can you turn on the light without making the light too bright?"
+	var battery_scene = preload("res://GameObjects/Battery.tscn")
+	var battery = battery_scene.instance()
+	battery.position.x = 550
+	battery.position.y = 250
+	battery.scale = Vector2(2, 2)
+	add_child(battery)
+	var bulb_scene = preload("res://GameObjects/Bulb.tscn")
+	var bulb = bulb_scene.instance()
+	bulb.position.x = 250
+	bulb.position.y = 250
+	add_child(bulb)
+	var resistor_scene = preload("res://GameObjects/Resistor.tscn")
+	var resistor = resistor_scene.instance()
+	resistor.position.x = 250
+	resistor.position.y = 350
+	add_child(resistor)
+	current_level_objects = [battery, bulb, resistor]
+
+func prepare_level_5():
+	current_level = 5
+	buddy.get_node("Label").text = "BETA: Let's power two bulbs in a parallel circuit!"
 	var battery_scene = preload("res://GameObjects/Battery.tscn")
 	var battery = battery_scene.instance()
 	battery.position.x = 250
@@ -159,9 +189,9 @@ func prepare_level_4():
 
 	current_level_objects = [battery, bulb, bulb2, three_way_conn, three_way_conn2]
 
-func prepare_level_5():
-	current_level = 5
-	buddy.get_node("Label").text = "Two switches must independently operate two bulbs."
+func prepare_level_6():
+	current_level = 6
+	buddy.get_node("Label").text = "BETA: Two switches must independently operate two bulbs."
 	var battery_scene = preload("res://GameObjects/Battery.tscn")
 	var battery = battery_scene.instance()
 	battery.position.x = 250
@@ -198,7 +228,7 @@ func prepare_level_5():
 	current_level_objects = [battery, bulb, bulb2, three_way_conn, three_way_conn2, switch, switch2]
 
 
-func finish_level_4():
+func finish_level_5():
 	$Control/HintButton.visible = false
 	$Control/NextLevelButton.visible = true
 	current_level_objects[1].get_node("OffSprite").visible = false
@@ -236,7 +266,7 @@ func turn_object_on(obj, is_on):
 	obj.get_node("OnSprite").visible = is_on
 
 # turns on bulbs if they are connected
-func check_bulbs():
+func check_bulbs_loop():
 	for obj in current_level_objects:
 		if "object_type" in obj && obj.object_type == "battery":
 			# TODO: check for battery blow up!
@@ -248,8 +278,6 @@ func check_bulbs():
 			turn_object_on(obj, is_on)
 
 func switch_is_on(obj):
-	print("checking if switch is on")
-	print(obj.get_node("OnSprite").visible)
 	return obj.get_node("OnSprite").visible
 
 func are_two_terminals_connected(obj):
@@ -257,18 +285,76 @@ func are_two_terminals_connected(obj):
 		return false
 	var current_obj_to_wire_data = current_object_connections_to_wires[obj]
 	var num_terminals_in_obj = 0
+	# check that at least 2 terminals have wires
 	for terminal in ["TerminalA", "TerminalB", "TerminalC"]:
 		if terminal in current_obj_to_wire_data && current_obj_to_wire_data[terminal]:
-			num_terminals_in_obj += 1
+			var wire = current_obj_to_wire_data[terminal]
+			# check that the wire connecting those terminals is connected on both ends
+			if len(current_wire_connections_to_objects[wire]) == 2:
+				num_terminals_in_obj += 1
 	return num_terminals_in_obj > 1
 
 # luckily, we only have to check battery -> 3 way -> 3 way -> battery. maybe switch?
-func check_battery_blow_up(battery):
+func check_battery_blowup(battery):
 	# TODO: check blowup!
+	# battery blow up is if:
+	# battery -> 3 way -> battery
+	# battery -> 3 way -> 3 way -> battery
+	# BFS to see if we can find a path back to battery
 	if are_two_terminals_connected(battery):
+		var seen_objs = { battery: true}
 		var current_wire = current_object_connections_to_wires[battery]["TerminalA"]
+		var seen_wires = { current_wire: true }
+		var new_obj = current_wire_connections_to_objects[current_wire][0]
+		if new_obj == battery:
+			new_obj = current_wire_connections_to_objects[current_wire][1]
+		var current_objs = [new_obj]
 
+		while len(current_objs) > 0:
+			var next_objs = []
+			var next_wires = []
+			for obj in current_objs:
+				if obj == battery:
+					# we found a path back!
+					return true
+				if obj in seen_objs:
+					continue
+				if obj_is_resistant(obj):
+					continue
+				if !are_two_terminals_connected(obj):
+					continue
+				var new_wires = get_connected_wires_from_obj(obj)
+				for wire in new_wires:
+					if !(wire in seen_wires):
+						next_wires.append(wire)
+						seen_wires[wire] = true
+				seen_objs[obj] = true
+			for wire in next_wires:
+				# add obj on either end of wire
+				next_objs.append(current_wire_connections_to_objects[wire][0])
+				next_objs.append(current_wire_connections_to_objects[wire][1])
+			current_objs = next_objs
 	return false
+# wire => [object1, object2]
+#var current_wire_connections_to_objects = {}
+# object => { "TerminalA": wire, "TerminalB": wire2, "TerminalC": wire3 }
+#var current_object_connections_to_wires = {}
+
+# returns wires that are connected on both ends to an obj
+func get_connected_wires_from_obj(obj):
+	var wires = []
+	var obj_conn = current_object_connections_to_wires[obj]
+	for terminal in ["TerminalA", "TerminalB", "TerminalC"]:
+		if terminal in obj_conn && obj_conn[terminal]:
+			var wire = obj_conn[terminal]
+			if len(current_wire_connections_to_objects[wire]) == 2:
+				wires.append(wire)
+	return wires
+
+# check whether at least there is some resistance to an object
+# battery not included
+func obj_is_resistant(obj):
+	return obj.object_type == "resistor" || obj.object_type == "bulb" || (obj.object_type == "switch" && !(switch_is_on(obj)))
 
 # takes a bulb
 # returns if it is powered
@@ -355,33 +441,72 @@ func finish_level_1():
 	$Control/NextLevelButton.visible = true
 	current_level_objects[1].get_node("OffSprite").visible = false
 	current_level_objects[1].get_node("OnSprite").visible = true
+	current_level_objects[1].get_node("OnSprite").modulate = Color(1,1,1)
 	buddy.get_node("Label").text = "Ah, thats much better!"
+
+func do_level_4_too_bright():
+	current_level_objects[1].get_node("OffSprite").visible = false
+	current_level_objects[1].get_node("OnSprite").visible = true
+	current_level_objects[1].get_node("OnSprite").modulate = Color(5,5,5)
+	buddy.get_node("Label").text = "The light is too bright! Undo in the upper right."
+
+func finish_level_4():
+	$Control/HintButton.visible = false
+	$Control/NextLevelButton.visible = true
+	current_level_objects[1].get_node("OffSprite").visible = false
+	current_level_objects[1].get_node("OnSprite").visible = true
+	buddy.get_node("Label").text = "The light is on and it isn't too bright, thank you!"
 
 func check_circuit_complete():
 	if current_level == 1 && len(current_level_wires) == 2:
 		finish_level_1()
 	elif current_level == 2:
+		if check_battery_blowup(current_level_objects[0]):
+			buddy.get_node("Label").text = "Your battery blew up!"
+			$Explosion.visible = true
+			buddy.get_node("Crying").visible = true
+			$Explosion.position = current_level_objects[0].position
+			return false
 		if len(current_level_wires) == 3:
 			finish_level_2()
 		else:
-			check_bulbs()
+			check_bulbs_loop()
 	elif current_level == 3:
 		if len(current_level_wires) == 3:
 			finish_level_3()
 		else:
-			check_bulbs()
+			check_bulbs_loop()
 	elif current_level == 4:
+		check_bulbs_loop()
+		if len(current_level_wires) == 3:
+			finish_level_4()
+		elif current_level_objects[1].get_node("OnSprite").visible:
+			do_level_4_too_bright()
+	elif current_level == 5:
+		if check_battery_blowup(current_level_objects[0]):
+			buddy.get_node("Label").text = "Your battery blew up!"
+			$Explosion.visible = true
+			buddy.get_node("Crying").visible = true
+			$Explosion.position = current_level_objects[0].position
+			return false
+		check_bulbs_loop()
+		# check_bulbs_bfs()
 		if len(current_level_wires) == 6:
 			# check if bulbs are indeed in parallel
 			if check_parallel():
 				buddy.get_node("Label").text = "This is close! These bulbs are in series, not parallel."
 			else:
-				finish_level_4()
+				finish_level_5()
 				return false
-		else:
-			check_bulbs()
-	elif current_level == 5:
-		check_bulbs()
+	elif current_level == 6:
+		if check_battery_blowup(current_level_objects[0]):
+			buddy.get_node("Label").text = "Your battery blew up!"
+			$Explosion.visible = true
+			buddy.get_node("Crying").visible = true
+			$Explosion.position = current_level_objects[0].position
+			return false
+		#check_bulbs_bfs()
+		check_bulbs_loop()
 		# TODO:
 		# 3 ways must be only to battery
 		# switch must be separate (cannot be on same loop?)
@@ -389,22 +514,69 @@ func check_circuit_complete():
 		return false
 	return false
 
+func check_bulbs_bfs():
+	for obj in current_level_objects:
+		if "object_type" in obj && obj.object_type == "bulb":
+			var is_on = bulb_is_on(obj)
+			turn_object_on(obj, is_on)
+
+func obj_allows_electricity(obj):
+	if obj.object_type == "switch" && !(switch_is_on(obj)):
+		return false
+	return true
+
+func bulb_is_on_bfs(bulb):
+	# bulb left
+	# bulb right
+	var seen_wires = {}
+	var left_seen_objs = {bulb: true}
+	var right_seen_objs = {bulb: true}
+	var left_found_battery = false
+	var right_found_battery = false
+	if are_two_terminals_connected(bulb):
+		var wires = get_connected_wires_from_obj(bulb)
+		# man all this coming next is just cray
+		seen_wires[wires[0]] = true
+		seen_wires[wires[1]] = true
+		var left_obj = current_wire_connections_to_objects[wires[0]][0]
+		if left_obj == bulb:
+			left_obj = current_wire_connections_to_objects[wires[0]][0]
+		var right_obj = current_wire_connections_to_objects[wires[1]][0]
+		if right_obj == bulb:
+			right_obj = current_wire_connections_to_objects[wires[1]][1]
+		var left_current_objs = [left_obj]
+		var right_current_objs = [right_obj]
+		# if either side runs out of next moves, stop
+		while len(left_current_objs) > 0 || len(right_current_objs) > 0:
+			for obj in left_current_objs:
+				if obj.object_type == "battery":
+					left_found_battery = true
+					continue
+				if !(obj_allows_electricity(obj)):
+					continue
+				
+		# dont let either side add _objects_ from the other side's seen
+		
+		# if both side finds a battery, we are good!
+# wire => [object1, object2]
+#var current_wire_connections_to_objects = {}
+# object => { "TerminalA": wire, "TerminalB": wire2, "TerminalC": wire3 }
+#var current_object_connections_to_wires = {}
+
+	return left_found_battery && right_found_battery
+
 # on parallel circuit level, it is sufficient to just ensure that the 2 bulbs dont touch 
+# for the parallel switch one.... well....
 func check_parallel():
 	for obj in current_level_objects:
 		if "object_type" in obj && obj.object_type == "bulb":
-			print("found a bulb")
 			if !(are_two_terminals_connected(obj)):
 				return false
 			var wire = current_object_connections_to_wires[obj]["TerminalA"]
 			if current_wire_connections_to_objects[wire][0].object_type == "bulb" && current_wire_connections_to_objects[wire][1].object_type == "bulb":
-				print("first wire is both")
 				return true
 			wire = current_object_connections_to_wires[obj]["TerminalB"]
 			var second_wire_is_both = current_wire_connections_to_objects[wire][0].object_type == "bulb" && current_wire_connections_to_objects[wire][1].object_type == "bulb"
-			print("second wire is")
-			print(second_wire_is_both)
-			return second_wire_is_both
 
 func _process(delta):
 	if dragging_object:

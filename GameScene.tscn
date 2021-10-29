@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://assets/question_mark_highlight.png" type="Texture" id=1]
 [ext_resource path="res://GameScene.gd" type="Script" id=2]
@@ -7,6 +7,7 @@
 [ext_resource path="res://assets/arrow_highlight.png" type="Texture" id=5]
 [ext_resource path="res://assets/reset_button.png" type="Texture" id=6]
 [ext_resource path="res://assets/reset_button_highlight.png" type="Texture" id=7]
+[ext_resource path="res://assets/explosion.png" type="Texture" id=8]
 
 [node name="Game" type="Node2D"]
 script = ExtResource( 2 )
@@ -54,3 +55,10 @@ expand = true
 __meta__ = {
 "_edit_use_anchors_": false
 }
+
+[node name="Explosion" type="Node2D" parent="."]
+visible = false
+z_index = 1
+
+[node name="Sprite" type="Sprite" parent="Explosion"]
+texture = ExtResource( 8 )
