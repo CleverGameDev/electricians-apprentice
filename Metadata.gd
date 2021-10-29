@@ -1,15 +1,15 @@
 extends Node2D
 
 var currentUserId = ""
-var scores = {}
+var data = {}
 
 func _ready():
 	var userId = getUserId()
 	currentUserId = userId
 	print("currentUserId: %s" % currentUserId)
 	
-	scores = getScoresFromCookies(currentUserId)
-	print("scores: %s" % scores)
+	data = getDataFromCookies()
+	print("data: %s" % data)
 	
 func getUserId():
 	var userId = ""
@@ -20,27 +20,28 @@ func getUserId():
 				userId = key_value[1]
 	return userId
 
-func saveScoresToCookies(userId):
+func saveDataToCookies():
 	var save_game = File.new()
-	save_game.open("user://%s" % userId, File.WRITE)
-	save_game.store_line(to_json(scores))
+	save_game.open("user://%s" % currentUserId, File.WRITE)
+	save_game.store_line(to_json(data))
 	save_game.close()
 
-func getScoresFromCookies(userId):
+func getDataFromCookies():
 	var save_game = File.new()
-	if not save_game.file_exists("user://%s" % userId):
-		return
+	if not save_game.file_exists("user://%s" % currentUserId):
+		return {}
 	
-	save_game.open("user://%s" % userId, File.READ)
+	save_game.open("user://%s" % currentUserId, File.READ)
 	var result = parse_json(save_game.get_line())
 	save_game.close()
 	
 	return result
 
-func saveScore(level, score):
-	scores[level] = score
-	print("saved score %s to level %s" % [score, level])
+func saveLevel(value):
+	data["current_level"] = value
+	print("saved value %s to key %s" % [value, "current_level"])
 	
-func getScore(level):
-	print("got score %s for level %s" % [scores[level], level])
-	return scores[level]
+func getLevel():
+	print("got value %s for key %s" % [data.get("current_level", 1), "current_level"])
+	# default to level 1
+	return data.get("current_level", 1)
