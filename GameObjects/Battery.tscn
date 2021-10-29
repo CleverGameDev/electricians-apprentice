@@ -7,7 +7,7 @@
 extents = Vector2( 36.2489, 48.3924 )
 
 [sub_resource type="RectangleShape2D" id=2]
-extents = Vector2( 3.89821, 3.02902 )
+extents = Vector2( 4.61161, 3.53815 )
 
 [node name="Battery" type="RigidBody2D"]
 mode = 3
@@ -27,24 +27,12 @@ shape = SubResource( 1 )
 position = Vector2( -23.7085, -50.1317 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="TerminalA"]
-position = Vector2( -0.0143051, -0.014082 )
+position = Vector2( -0.0682468, -0.364679 )
 shape = SubResource( 2 )
-
-[node name="Sprite" type="Sprite" parent="TerminalA"]
-scale = Vector2( 0.5, 0.5 )
-texture = ExtResource( 1 )
-region_enabled = true
-region_rect = Rect2( 93.1412, 48.2535, 15.7561, 12.0046 )
 
 [node name="TerminalB" type="StaticBody2D" parent="."]
 position = Vector2( 25.3919, -50.3738 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="TerminalB"]
-position = Vector2( -0.181152, 0.213409 )
+position = Vector2( 0.142472, -0.137185 )
 shape = SubResource( 2 )
-
-[node name="Sprite" type="Sprite" parent="TerminalB"]
-scale = Vector2( 0.5, 0.5 )
-texture = ExtResource( 1 )
-region_enabled = true
-region_rect = Rect2( 93.1412, 48.2535, 15.7561, 12.0046 )
