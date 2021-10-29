@@ -26,7 +26,8 @@ func _ready():
 	buddy = buddy_scene.instance()
 	add_child(buddy)
 	# prepare_level_1()
-	prepare_level_2()
+	#prepare_level_2()
+	prepare_level_4()
 
 func remove_previous_level():
 	for obj in current_level_wires:
@@ -42,16 +43,22 @@ func reset_button_pressed():
 		prepare_level_1()
 	elif current_level == 2:
 		prepare_level_2()
+	elif current_level == 4:
+		prepare_level_4()
 
 func next_level_button_pressed():
 	remove_previous_level()
 	if current_level == 1:
 		prepare_level_2()
+	elif current_level == 2:
+		prepare_level_4()
 
 func hint_button_pressed():
 	if current_level == 1:
 		buddy.get_node("Label").text = "Try drawing a wire between the battery and light bulb terminals."
 		# TODO: show circle?
+	elif current_level == 4:
+		buddy.get_node("Label").text = "Try using the resistor! It reduces electricity flow."
 
 func prepare_level_1():
 	# $Whatever.save_progress(0)
@@ -89,6 +96,27 @@ func prepare_level_2():
 	add_child(switch)
 	current_level_objects = [battery, bulb, switch]
 
+func prepare_level_4():
+	current_level = 4
+	buddy.get_node("Label").text = "This battery is really powerful! Can you turn on the light without making the light too bright?"
+	var battery_scene = preload("res://GameObjects/Battery.tscn")
+	var battery = battery_scene.instance()
+	battery.position.x = 550
+	battery.position.y = 250
+	battery.scale = Vector2(3.75, 3.75)
+	add_child(battery)
+	var bulb_scene = preload("res://GameObjects/Bulb.tscn")
+	var bulb = bulb_scene.instance()
+	bulb.position.x = 250
+	bulb.position.y = 250
+	add_child(bulb)
+	var resistor_scene = preload("res://GameObjects/Resistor.tscn")
+	var resistor = resistor_scene.instance()
+	resistor.position.x = 250
+	resistor.position.y = 350
+	add_child(resistor)
+	current_level_objects = [battery, bulb, resistor]
+
 func finish_level_2():
 	if current_level_objects[2].get_node("OnSprite").visible:
 		$Control/HintButton.visible = false
@@ -111,11 +139,28 @@ func finish_level_1():
 	current_level_objects[1].get_node("OnSprite").visible = true
 	buddy.get_node("Label").text = "Ah, thats much better!"
 
+func do_level_4_too_bright():
+	current_level_objects[1].get_node("OffSprite").visible = false
+	# TODO: make this the bright sprite
+	current_level_objects[1].get_node("OnSprite").visible = true
+	buddy.get_node("Label").text = "The light is too bright!"
+
+func finish_level_4():
+	$Control/HintButton.visible = false
+	$Control/NextLevelButton.visible = true
+	current_level_objects[1].get_node("OffSprite").visible = false
+	current_level_objects[1].get_node("OnSprite").visible = true
+	buddy.get_node("Label").text = "The light is on and it isn't too bright, thank you!"
+
 func check_circuit_complete():
 	if current_level == 1 && len(current_level_wires) == 2:
 		finish_level_1()
 	elif current_level == 2 && len(current_level_wires) == 3:
 		finish_level_2()
+	elif current_level == 4 && len(current_level_wires) == 2:
+		do_level_4_too_bright()
+	elif current_level == 4 && len(current_level_wires) == 3:
+		finish_level_4()
 	return false
 
 func _process(delta):
