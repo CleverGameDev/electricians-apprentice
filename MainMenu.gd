@@ -1,10 +1,10 @@
-extends Node2D
+extends "res://Metadata.gd"
 
 var can_show: = true
 
 var newgame
 var about
-var blank
+var loadgame
 var blank_count = 0
 var exit
 var buddy
@@ -16,8 +16,8 @@ func _ready():
 	add_child(buddy)
 	newgame = $Control/VBoxContainer/NewGame
 	newgame.connect("pressed", self, "_on_new_game_pressed")
-	blank = $Control/VBoxContainer/Blank
-	blank.connect("pressed", self, "_on_blank_pressed")
+	loadgame = $Control/VBoxContainer/LoadGame
+	loadgame.connect("pressed", self, "_on_load_game_pressed")
 	about = $Control/VBoxContainer/About
 	about.connect("pressed", self, "_on_about_pressed")
 	exit = $Control/VBoxContainer/Exit
@@ -25,14 +25,13 @@ func _ready():
 
 func _on_new_game_pressed():
 	buddy.free()
+	saveLevel(1)
+	saveDataToCookies()
 	get_tree().change_scene("res://GameScene.tscn")
 
-func _on_blank_pressed():
-	blank_count += 1
-	if blank_count == 1:
-		buddy.get_node("Label").text = "This button doesn't really do anything. You have pressed this button 1 time."
-	else:
-		buddy.get_node("Label").text = "This button doesn't really do anything. You have pressed this button " + str(blank_count) + " times."
+func _on_load_game_pressed():
+	buddy.free()
+	get_tree().change_scene("res://GameScene.tscn")
 
 func _on_about_pressed():
 	buddy.get_node("Label").text = "code: stoecker\ncode: vzhou\nassets: gashley\nlevels: antonio"
