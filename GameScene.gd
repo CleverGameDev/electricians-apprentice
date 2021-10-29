@@ -272,8 +272,6 @@ func check_bulbs_loop():
 			continue
 		elif "object_type" in obj && obj.object_type == "bulb":
 			var is_on = bulb_is_on(obj)
-			print("the bulb is")
-			print(is_on)
 			turn_object_on(obj, is_on)
 
 func switch_is_on(obj):
@@ -368,36 +366,25 @@ func bulb_is_on(bulb):
 		# we are powered
 		var seen_objs = { bulb: true }
 		var seen_wires = {}
-		print("checking bulb")
-		print("checking bulb")
-		print("checking bulb")
 		if are_two_terminals_connected(bulb):
-			print("builb has 2 terms")
 			var current_wire = current_object_connections_to_wires[bulb]["TerminalA"]
 			if len(current_wire_connections_to_objects[current_wire]) != 2:
-				print("wire has 1 conn")
 				return false
 			seen_wires[current_wire] = true
 			var current_obj = current_wire_connections_to_objects[current_wire][0]
 			if current_obj == bulb:
 				current_obj = current_wire_connections_to_objects[current_wire][1]
 			while !(current_obj in seen_objs):
-				print("checking nxt obj")
-				print(current_obj)
-				print(current_obj.object_type)
 				seen_objs[current_obj] = true
 				# 2 terminals must be connected
 				if !are_two_terminals_connected(current_obj):
-					print("current obj is not fully in")
 					return false
 				# check 3 way connectors
 				var next_wire
 				if "TerminalA" in current_object_connections_to_wires[current_obj] && current_object_connections_to_wires[current_obj]["TerminalA"]:
-					print("trying term a")
 					next_wire = current_object_connections_to_wires[current_obj]["TerminalA"]
 				if !next_wire || current_wire == next_wire:
 					if "TerminalB" in current_object_connections_to_wires[current_obj] && current_object_connections_to_wires[current_obj]["TerminalB"]:
-						print("trying term b")
 						next_wire = current_object_connections_to_wires[current_obj]["TerminalB"]
 
 				if !next_wire || current_wire == next_wire:
@@ -407,31 +394,23 @@ func bulb_is_on(bulb):
 				if !next_wire:
 					return false
 				if len(current_wire_connections_to_objects[next_wire]) != 2:
-					print("next wire on obj is not fully in")
 					return false
 				
 				var next_obj = current_wire_connections_to_objects[next_wire][0]
 				if current_obj == next_obj:
 					next_obj = current_wire_connections_to_objects[next_wire][1]
-				print("the next obj is")
-				print(next_obj)
-				print(next_obj.object_type)
 				#if current
 				if "object_type" in current_obj:
 					if current_obj.object_type == "switch" && !(switch_is_on(current_obj)):
-						print("got switch, switch is off")
 						return false
 					if current_obj.object_type == "battery":
-						print("got battery!")
 						has_battery = true
 				current_obj = next_obj
 				current_wire = next_wire
 			return has_battery
 		else:
-			print("bulb has 1 terminal")
 			return false
 	else:
-		print("bulb not connected?")
 		return false
 
 func finish_level_1():
@@ -488,8 +467,8 @@ func check_circuit_complete():
 			buddy.get_node("Crying").visible = true
 			$Explosion.position = current_level_objects[0].position
 			return false
-		check_bulbs_loop()
-		# check_bulbs_bfs()
+		#check_bulbs_loop()
+		check_bulbs_bfs()
 		if len(current_level_wires) == 6:
 			# check if bulbs are indeed in parallel
 			if check_parallel():
@@ -504,8 +483,8 @@ func check_circuit_complete():
 			buddy.get_node("Crying").visible = true
 			$Explosion.position = current_level_objects[0].position
 			return false
-		#check_bulbs_bfs()
-		check_bulbs_loop()
+		check_bulbs_bfs()
+		#check_bulbs_loop()
 		# TODO:
 		# 3 ways must be only to battery
 		# switch must be separate (cannot be on same loop?)
@@ -516,7 +495,7 @@ func check_circuit_complete():
 func check_bulbs_bfs():
 	for obj in current_level_objects:
 		if "object_type" in obj && obj.object_type == "bulb":
-			var is_on = bulb_is_on(obj)
+			var is_on = bulb_is_on_bfs(obj)
 			turn_object_on(obj, is_on)
 
 func obj_allows_electricity(obj):
@@ -527,33 +506,80 @@ func obj_allows_electricity(obj):
 func bulb_is_on_bfs(bulb):
 	# bulb left
 	# bulb right
-	var seen_wires = {}
+	var left_seen_wires = {}
+	var right_seen_wires = {}
 	var left_seen_objs = {bulb: true}
 	var right_seen_objs = {bulb: true}
 	var left_found_battery = false
 	var right_found_battery = false
 	if are_two_terminals_connected(bulb):
-		var wires = get_connected_wires_from_obj(bulb)
+		var first_wires = get_connected_wires_from_obj(bulb)
 		# man all this coming next is just cray
-		seen_wires[wires[0]] = true
-		seen_wires[wires[1]] = true
-		var left_obj = current_wire_connections_to_objects[wires[0]][0]
+		left_seen_wires[first_wires[0]] = true
+		right_seen_wires[first_wires[1]] = true
+		var left_obj = current_wire_connections_to_objects[first_wires[0]][0]
 		if left_obj == bulb:
-			left_obj = current_wire_connections_to_objects[wires[0]][0]
-		var right_obj = current_wire_connections_to_objects[wires[1]][0]
+			left_obj = current_wire_connections_to_objects[first_wires[0]][0]
+		var right_obj = current_wire_connections_to_objects[first_wires[1]][0]
 		if right_obj == bulb:
-			right_obj = current_wire_connections_to_objects[wires[1]][1]
+			right_obj = current_wire_connections_to_objects[first_wires[1]][1]
 		var left_current_objs = [left_obj]
 		var right_current_objs = [right_obj]
 		# if either side runs out of next moves, stop
 		while len(left_current_objs) > 0 || len(right_current_objs) > 0:
+			var next_left_objs = []
+			var next_right_objs= []
+			var next_right_wires = []
+			var next_left_wires = []
 			for obj in left_current_objs:
+				if !are_two_terminals_connected(obj):
+					continue
 				if obj.object_type == "battery":
 					left_found_battery = true
 					continue
+				if obj in left_seen_objs:
+					continue
 				if !(obj_allows_electricity(obj)):
 					continue
-				
+				var wires = get_connected_wires_from_obj(obj)
+				for wire in wires:
+					if wire in left_seen_wires:
+						continue
+					next_left_wires.append(wire)
+					left_seen_wires[wire] = true
+			for wire in next_left_wires:
+				next_left_objs.append(current_wire_connections_to_objects[wire][0])
+				next_left_objs.append(current_wire_connections_to_objects[wire][1])
+			left_current_objs = next_left_objs
+			for obj in right_current_objs:
+				if !are_two_terminals_connected(obj):
+					continue
+				if obj.object_type == "battery":
+					right_found_battery = true
+					continue
+				if obj in right_seen_objs:
+					continue
+				if !(obj_allows_electricity(obj)):
+					continue
+				var wires = get_connected_wires_from_obj(obj)
+				for wire in wires:
+					if wire in right_seen_wires:
+						continue
+					next_right_wires.append(wire)
+					right_seen_wires[wire] = true
+			for wire in next_right_wires:
+				next_right_objs.append(current_wire_connections_to_objects[wire][0])
+				next_right_objs.append(current_wire_connections_to_objects[wire][1])
+			
+			right_current_objs = next_right_objs
+			for obj in right_current_objs:
+				print(obj.object_type)
+			for obj in left_current_objs:
+				print(obj.object_type)
+
+
+
+
 		# dont let either side add _objects_ from the other side's seen
 		
 		# if both side finds a battery, we are good!
