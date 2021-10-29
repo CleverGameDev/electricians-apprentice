@@ -25,8 +25,7 @@ func _ready():
 	var buddy_scene = preload("res://Buddy.tscn")
 	buddy = buddy_scene.instance()
 	add_child(buddy)
-	#prepare_level_1()
-	prepare_level_2()
+	prepare_level_1()
 
 
 func remove_previous_level():
@@ -82,7 +81,7 @@ func hint_button_pressed():
 	elif current_level == 5:
 		buddy.get_node("Label").text = "BETA: The component with 3 dots can connect multiple wires."
 	elif current_level == 6:
-		buddy.get_node("Label").text = "BETA: The component with 3 dots can connect multiple wires. Make sure the switches are in separate parallel circuits."
+		buddy.get_node("Label").text = "ALPHA: The component with 3 dots can connect multiple wires. Make sure the switches are in separate parallel circuits."
 
 func prepare_level_1():
 	# $Whatever.save_progress(0)
@@ -191,7 +190,7 @@ func prepare_level_5():
 
 func prepare_level_6():
 	current_level = 6
-	buddy.get_node("Label").text = "BETA: Two switches must independently operate two bulbs."
+	buddy.get_node("Label").text = "ALPHA: Two switches must independently operate two bulbs."
 	var battery_scene = preload("res://GameObjects/Battery.tscn")
 	var battery = battery_scene.instance()
 	battery.position.x = 250
